@@ -27,7 +27,7 @@ def addTask(name, status):
     row.status = status
 
 
-@app.route('/add_inbox', methods=['GET'])
+@app.route('/add_inbox', methods=['POST'])
 def create_inbox():
     name = request.args.get('name')
     source = request.args.get('source')
@@ -35,7 +35,7 @@ def create_inbox():
     return f'added {name} to Notion'
 
 
-@app.route('/add_task', methods=['GET'])
+@app.route('/add_task', methods=['POST'])
 def create_task():
     name = request.args.get('name')
     status = request.args.get('status')
