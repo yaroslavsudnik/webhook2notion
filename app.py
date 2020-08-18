@@ -29,16 +29,16 @@ def addTask(name, status):
 
 @app.route('/add_inbox', methods=['POST'])
 def create_inbox():
-    name = request.args.get('name')
-    source = request.args.get('source')
+    name = request.get_json().get('name')
+    source = request.get_json().get('source')
     addResourcesToInbox(name, source)
     return f'added {name} to Notion'
 
 
 @app.route('/add_task', methods=['POST'])
 def create_task():
-    name = request.args.get('name')
-    status = request.args.get('status')
+    name = request.get_json().get('name')
+    status = request.get_json().get('status')
     addTask(name, status)
     return f'added {name} to Notion'
 
