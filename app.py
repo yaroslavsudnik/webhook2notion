@@ -18,7 +18,7 @@ resources_url = os.environ.get("RESOURCES_URL")
 
 
 def is_authorized():
-    user_token = request.headers.environ.get('HTTP_AUTHORIZATION')
+    user_token = request.headers.environ.get('HTTP_AUTHORIZATION', '')
     hash_token = hashlib.sha256(b(user_token)).hexdigest()
     return password == hash_token
 
