@@ -138,11 +138,13 @@ def get_card_endpoint(card_id):
 class JSONEncoder(app.json_encoder):
     def default(self, o):
         if isinstance(o, TableQueryResult):
-            result = []
+            result = {}
             for row in o:
-                result.append({
-                    'id': row.id,
-                    'title': row.title
+                result.update({
+                    row.title: {
+                        'id': row.id,
+                        'title': row.title
+                    }
                 })
             return result
         else:
