@@ -32,6 +32,7 @@ def add_resources_to_inbox(title, source):
     row = cv.collection.add_row()
     row.title = title
     row.source = source
+    return row.id
 
 
 def add_task(name, status):
@@ -40,6 +41,7 @@ def add_task(name, status):
     row = cv.collection.add_row()
     row.title = name
     row.status = status
+    return row.id
 
 
 def add_resource(name, source, type_source, status, translate):
@@ -51,6 +53,7 @@ def add_resource(name, source, type_source, status, translate):
     row.type = type_source
     row.status = status
     row.translate = translate
+    return row.id
 
 
 def get_cards():
@@ -86,8 +89,9 @@ def create_inbox_endpoint():
     if is_authorized():
         name = request.get_json().get('name')
         source = request.get_json().get('source')
-        add_resources_to_inbox(name, source)
-        return f'Added to Inbox', HTTP_201_CREATED
+        row_id = add_resources_to_inbox(name, source)
+        url_id = row_id.replace("-", "")
+        return url_id, HTTP_201_CREATED
     else:
         return f'Error. Unauthorized request', HTTP_401_UNAUTHORIZED
 
@@ -97,8 +101,9 @@ def create_task_endpoint():
     if is_authorized():
         name = request.get_json().get('name')
         status = request.get_json().get('status')
-        add_task(name, status)
-        return f'Added to Tasks', HTTP_201_CREATED
+        row_id = add_task(name, status)
+        url_id = row_id.replace("-", "")
+        return url_id, HTTP_201_CREATED
     else:
         return f'Error. Unauthorized request', HTTP_401_UNAUTHORIZED
 
@@ -111,8 +116,9 @@ def create_resource_endpoint():
         type_source = request.get_json().get('type')
         status = request.get_json().get('status')
         translate = request.get_json().get('translate')
-        add_resource(name, source, type_source, status, translate)
-        return f'Added to Resources', HTTP_201_CREATED
+        row_id = add_resource(name, source, type_source, status, translate)
+        url_id = row_id.replace("-", "")
+        return url_id, HTTP_201_CREATED
     else:
         return f'Error. Unauthorized request', HTTP_401_UNAUTHORIZED
 
