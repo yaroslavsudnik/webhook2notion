@@ -32,7 +32,7 @@ def add_resources_to_inbox(title, source):
     row = cv.collection.add_row()
     row.title = title
     row.source = source
-    return row.id
+    return row
 
 
 def add_task(name, status):
@@ -41,7 +41,7 @@ def add_task(name, status):
     row = cv.collection.add_row()
     row.title = name
     row.status = status
-    return row.id
+    return row
 
 
 def add_resource(name, source, type_source, status, translate):
@@ -53,7 +53,7 @@ def add_resource(name, source, type_source, status, translate):
     row.type = type_source
     row.status = status
     row.translate = translate
-    return row.id
+    return row
 
 
 def get_cards():
@@ -89,9 +89,11 @@ def create_inbox_endpoint():
     if is_authorized():
         name = request.get_json().get('name')
         source = request.get_json().get('source')
-        row_id = add_resources_to_inbox(name, source)
-        url_id = row_id.replace("-", "")
-        return url_id, HTTP_201_CREATED
+        row = add_resources_to_inbox(name, source)
+        return {
+                   'id': row.id.replace("-", ""),
+                   'title': row.title
+               }, HTTP_201_CREATED
     else:
         return f'Error. Unauthorized request', HTTP_401_UNAUTHORIZED
 
@@ -101,9 +103,11 @@ def create_task_endpoint():
     if is_authorized():
         name = request.get_json().get('name')
         status = request.get_json().get('status')
-        row_id = add_task(name, status)
-        url_id = row_id.replace("-", "")
-        return url_id, HTTP_201_CREATED
+        row = add_task(name, status)
+        return {
+                   'id': row.id.replace("-", ""),
+                   'title': row.title
+               }, HTTP_201_CREATED
     else:
         return f'Error. Unauthorized request', HTTP_401_UNAUTHORIZED
 
@@ -116,9 +120,11 @@ def create_resource_endpoint():
         type_source = request.get_json().get('type')
         status = request.get_json().get('status')
         translate = request.get_json().get('translate')
-        row_id = add_resource(name, source, type_source, status, translate)
-        url_id = row_id.replace("-", "")
-        return url_id, HTTP_201_CREATED
+        row = add_resource(name, source, type_source, status, translate)
+        return {
+                   'id': row.id.replace("-", ""),
+                   'title': row.title
+               }, HTTP_201_CREATED
     else:
         return f'Error. Unauthorized request', HTTP_401_UNAUTHORIZED
 
