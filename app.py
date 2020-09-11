@@ -13,6 +13,7 @@ HTTP_201_CREATED = 201
 HTTP_401_UNAUTHORIZED = 401
 
 token_v2 = os.environ.get("TOKEN")
+telegram_token = os.environ.get("TOKEN_2")
 password = os.environ.get("PASSWORD")
 inbox_url = os.environ.get("INBOX_URL")
 tasks_url = os.environ.get("TASKS_URL")
@@ -26,12 +27,18 @@ def is_authorized():
     return password == hash_token
 
 
-def add_resources_to_inbox(title, source):
+def token_is_valid(token):
+    hash_token = hashlib.sha256(b(token)).hexdigest()
+    return telegram_token == hash_token
+
+
+def add_resources_to_inbox(title, source, text):
     client = NotionClient(token_v2)
     cv = client.get_collection_view(inbox_url)
     row = cv.collection.add_row()
     row.title = title
     row.source = source
+    row.property = text
     return row
 
 
@@ -89,7 +96,7 @@ def create_inbox_endpoint():
     if is_authorized():
         name = request.get_json().get('name')
         source = request.get_json().get('source')
-        row = add_resources_to_inbox(name, source)
+        row = add_resources_to_inbox(name, source, '')
         return {
                    'id': row.id.replace("-", ""),
                    'title': row.title
@@ -143,6 +150,15 @@ def get_card_endpoint(card_id):
     if is_authorized():
         card = get_card(card_id)
         return jsonify(card), HTTP_201_CREATED
+    else:
+        return f'Error. Unauthorized request', HTTP_401_UNAUTHORIZED
+
+
+@app.route('/telegram/<token>', methods=['POST'])
+def telegram_request(token):
+    if token_is_valid(token):
+        add_resources_to_inbox('Telegram test', '', request.get_json())
+        return f'Success', HTTP_201_CREATED
     else:
         return f'Error. Unauthorized request', HTTP_401_UNAUTHORIZED
 
