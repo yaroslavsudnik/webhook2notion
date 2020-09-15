@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 
 from flask import Flask, jsonify
@@ -157,7 +158,7 @@ def get_card_endpoint(card_id):
 @app.route('/telegram/<token>', methods=['POST'])
 def telegram_request(token):
     if token_is_valid(token):
-        add_resources_to_inbox('Telegram test', '', request.get_json())
+        add_resources_to_inbox('Telegram test', '', json.dumps(request.get_json()))
         return f'Success', HTTP_201_CREATED
     else:
         return f'Error. Unauthorized request', HTTP_401_UNAUTHORIZED
