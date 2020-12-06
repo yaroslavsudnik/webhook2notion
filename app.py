@@ -1,62 +1,60 @@
 import hashlib
-import json
 import os
 
 from flask import Flask, jsonify
 from flask import request
 from notion.client import NotionClient
-from notion.collection import TableQueryResult
+from requests import HTTPError
 from setuptools._vendor.six import b
+
+import JSONEncoder
 
 app = Flask(__name__)
 
 HTTP_201_CREATED = 201
 HTTP_401_UNAUTHORIZED = 401
 
-token_v2 = os.environ.get("TOKEN")
-telegram_token = os.environ.get("TOKEN_2")
-password = os.environ.get("PASSWORD")
+password_hash = os.environ.get("PASSWORD")
 inbox_url = os.environ.get("INBOX_URL")
 tasks_url = os.environ.get("TASKS_URL")
 resources_url = os.environ.get("RESOURCES_URL")
 cards_url = os.environ.get("CARDS_URL")
 
+client: NotionClient  # Note: no initial value!
+
 
 def is_authorized():
-    user_token = request.headers.environ.get('HTTP_AUTHORIZATION', '')
-    hash_token = hashlib.sha256(b(user_token)).hexdigest()
-    return password == hash_token
+    try:
+        token = request.headers.environ.get('HTTP_AUTHORIZATION', '')
+        global client
+        client = NotionClient(token)
+        token_hash = hashlib.sha256(b(token)).hexdigest()
+        return password_hash == token_hash
+    except HTTPError as e:
+        return e.response.status_code != HTTP_401_UNAUTHORIZED
 
 
-def token_is_valid(token):
-    hash_token = hashlib.sha256(b(token)).hexdigest()
-    return telegram_token == hash_token
-
-
-def add_resources_to_inbox(title, source, text):
-    client = NotionClient(token_v2)
+def add_resources_to_inbox(name, source, text):
     cv = client.get_collection_view(inbox_url)
     row = cv.collection.add_row()
-    row.title = title
+    row.name = name
     row.source = source
     row.property = text
     return row
 
 
 def add_task(name, status):
-    client = NotionClient(token_v2)
     cv = client.get_collection_view(tasks_url)
     row = cv.collection.add_row()
-    row.title = name
+    row.name = name
     row.status = status
     return row
 
 
 def add_resource(name, source, type_source, status, translate):
-    client = NotionClient(token_v2)
     cv = client.get_collection_view(resources_url)
     row = cv.collection.add_row()
-    row.title = name
+    row.name = name
     row.source = source
     row.type = type_source
     row.status = status
@@ -65,14 +63,12 @@ def add_resource(name, source, type_source, status, translate):
 
 
 def get_cards():
-    client = NotionClient(token_v2)
     cv = client.get_collection_view(cards_url)
     query = cv.default_query()
     return query.execute()
 
 
 def get_card(card_id):
-    client = NotionClient(token_v2)
     page = client.get_block(card_id)
     return {
         'id': page.id,
@@ -153,31 +149,6 @@ def get_card_endpoint(card_id):
         return jsonify(card), HTTP_201_CREATED
     else:
         return f'Error. Unauthorized request', HTTP_401_UNAUTHORIZED
-
-
-@app.route('/telegram/<token>', methods=['POST'])
-def telegram_request(token):
-    if token_is_valid(token):
-        add_resources_to_inbox('Telegram test', '', json.dumps(request.get_json()))
-        return f'Success', HTTP_201_CREATED
-    else:
-        return f'Error. Unauthorized request', HTTP_401_UNAUTHORIZED
-
-
-class JSONEncoder(app.json_encoder):
-    def default(self, o):
-        if isinstance(o, TableQueryResult):
-            result = {}
-            for row in o:
-                result.update({
-                    row.title: {
-                        'id': row.id,
-                        'title': row.title
-                    }
-                })
-            return result
-        else:
-            return super().default(o)
 
 
 if __name__ == '__main__':
