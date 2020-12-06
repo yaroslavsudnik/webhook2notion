@@ -4,10 +4,9 @@ import os
 from flask import Flask, jsonify
 from flask import request
 from notion.client import NotionClient
+from notion.collection import TableQueryResult
 from requests import HTTPError
 from setuptools._vendor.six import b
-
-import JSONEncoder
 
 app = Flask(__name__)
 
@@ -149,6 +148,22 @@ def get_card_endpoint(card_id):
         return jsonify(card), HTTP_201_CREATED
     else:
         return f'Error. Unauthorized request', HTTP_401_UNAUTHORIZED
+
+
+class JSONEncoder(app.json_encoder):
+    def default(self, o):
+        if isinstance(o, TableQueryResult):
+            result = {}
+            for row in o:
+                result.update({
+                    row.title: {
+                        'id': row.id,
+                        'title': row.title
+                    }
+                })
+            return result
+        else:
+            return super().default(o)
 
 
 if __name__ == '__main__':
